@@ -18,6 +18,10 @@ requires "jsonschema"
 when defined(macosx):
     binDir = "bin/atomic_dex_desktop.app/Contents/MacOS"
 
+when defined(windows):
+    binDir = "bin"
+    cpDir("assets", "bin/assets")
+
 before build:
     when defined(macosx):
         exec("cp -u data/osx/Info.plist bin/atomic_dex_desktop.app/Contents/ ;" &

@@ -50,6 +50,7 @@ export unsafeAccess
 var coinsRegistry: Table[string, CoinConfigParams]
 var lock: Lock
 
+lock.initLock()
 ##! Public functions
 proc parseCfg*() =
     let entireFile = readFile(getAssetsPath() & "/config/coins.json")
