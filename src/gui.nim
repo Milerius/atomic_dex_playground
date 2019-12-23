@@ -101,6 +101,9 @@ proc portfolioCoinsListView() =
     portfolioGuiCoinNameImg(v["coin"].getStr)
   igEndChild()
 
+proc portfolioTransactionView() =
+  return
+
 proc portfolioCoinDetails() =
   igBeginChild("item view", ImVec2(x: 0, y: 0), true)
   portfolioGuiCoinNameImg(curAssetTicker)
@@ -108,6 +111,11 @@ proc portfolioCoinDetails() =
   if balanceRegistry.contains(curAssetTicker):
     igText("\uf24e" & " Balance: " & balanceRegistry.getOrDefault(curAssetTicker).myBalance() & " " & curAssetTicker & " (0 USD)")
   igSeparator()
+  if igBeginTabBar("##Tabs", ImGuiTabBarFlags.None):
+    if igBeginTabItem("Transactions"):
+      portfolioTransactionView()
+      igEndTabItem()
+    igEndTabBar()
   igEndChild()
 
 proc portfolioView() =

@@ -2,6 +2,7 @@ import options
 import json
 import ./mm2_api
 import ./workers_channels
+import cpp_bindings/boost/multiprecision
 
 proc processBalance*(ticker: string) : bool =
     {.gcsafe.}:
@@ -15,5 +16,15 @@ proc processBalance*(ticker: string) : bool =
             #discard balanceRegistry.insertOrAssign(ticker, answer.success.get())
             result = true
 
+proc getBalanceWithLockedFunds(balance: BalanceAnswerSuccess) : TFloat50 =
+    var balance_f : TFloat50 = constructTFloat50(balance["balance"].getStr)
+    var locked_funds_f: TFloat50 = constructTFloat50(balance["locked_by_swaps"].getStr)
+    result = balance_f - locked_funds_f
+
+proc myBalanceWithLockedFunds*(balance: BalanceAnswerSuccess) : string =
+    result = $getBalanceWithLockedFunds(balance).convertToStr
+
 proc myBalance*(balance: BalanceAnswerSuccess) : string =
+    discard myBalanceWithLockedFunds(balance)
     result = balance["balance"].getStr
+

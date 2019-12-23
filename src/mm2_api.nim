@@ -14,7 +14,8 @@ let lgEndpoint = "http://127.0.0.1:7783"
 proc processPost(data: JsonNode) : string =
     var client = newHttpClient()
     result = client.postContent(lgEndpoint, body = $data)
-    echo "resp: ", result
+    when defined(debug):
+        echo "resp: ", result
 
 jsonSchema:
     ElectrumRequestParams:
