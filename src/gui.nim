@@ -100,10 +100,20 @@ proc portfolioCoinsListView() =
     portfolioGuiCoinNameImg(v["coin"].getStr)
   igEndChild()
 
+proc portfolioCoinDetails() =
+  igBeginChild("item view", ImVec2(x: 0, y: 0), true)
+  portfolioGuiCoinNameImg(curAssetTicker)
+  igSeparator()
+  igText("\uf24e" & " Balance: " & "0 " & curAssetTicker & " (0 USD)")
+  igSeparator()
+  igEndChild()
+
 proc portfolioView() =
   igText("Total Balance: 0 USD")
   portfolioEnableCoinView()
   portfolioCoinsListView()
+  igSameLine()
+  portfolioCoinDetails()
 
 proc mainView() =
   mainMenuBar()
