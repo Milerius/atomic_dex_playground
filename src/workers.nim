@@ -5,6 +5,7 @@ import threadpool
 import asyncdispatch
 import os
 
+##! Project Import
 import ./coin_cfg
 import ./mm2_api
 import ./workers_channels
@@ -20,7 +21,6 @@ proc processBalance(ticker: string) : bool =
             result = false
         else:
             discard balanceChannel.trySend(answer.success.get())
-            #discard balanceRegistry.insertOrAssign(ticker, answer.success.get())
             result = true
 
 proc taskResfreshBalance() {.async.} =
@@ -29,7 +29,8 @@ proc taskResfreshBalance() {.async.} =
     if coins.len == 0:
         return
     for i, coin in coins:
-        discard processBalance(coin["coin"].getStr)
+        discard spawn processBalance(coin["coin"].getStr)
+    sync()
 
 proc allTasks30s() {.async.} =
     await sleepAsync(1)

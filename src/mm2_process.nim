@@ -2,6 +2,7 @@ import os
 import osproc
 import threadpool
 import marshal
+import std/atomics
 
 import ./mm2_config
 import ./mm2_core
@@ -12,15 +13,15 @@ import ./utils
 var 
     mm2Cfg : MM2Config = MM2Config(gui: "MM2GUI", netid: 9999, userhome: os.getHomeDir(), passphrase: "thisIsTheNewProjectSeed2019##", rpc_password: "atomic_dex_rpc_password")
     mm2Instance : Process = nil
+    mm2IsRunning*: Atomic[bool]
 
-## Initialization
-#mm2FullyRunning.store(false, moRelaxed)
 
 ##! Public function
 proc setPassphrase*(passphrase: string) =
     mm2Cfg.passphrase = passphrase
 
 proc mm2InitThread() {.thread.} =
+    mm2IsRunning.store(false)
     {.gcsafe.}:
         var toolsPath = (getAssetsPath() & "/tools/mm2").normalizedPath
         try: 
@@ -30,6 +31,7 @@ proc mm2InitThread() {.thread.} =
         finally:
             echo "Fine."
     sleep(1000)
+    mm2IsRunning.store(true)
     enableDefaultCoins()
     launchWorkers()
     

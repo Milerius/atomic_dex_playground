@@ -1,21 +1,29 @@
 import ui_workflow_nim
 import json
+import std/atomics
 import tables
 
 import ./mm2_api
+import ./mm2_process
 import ./workers_channels
 import ./gui_style
+import ./gui_widgets
 
 var
     is_open = true
-    mm2_is_running = false
     balanceRegistry: Table[string, BalanceAnswerSuccess]
 
 proc mainView() =
     var foo = 0
 
 proc waitingView() =
-    var foo = 0
+  igText("Loading, please wait...")
+  let
+    radius = 30.0
+    pos = ImVec2(x: igGetWindowWidth() * 0.5f - radius, y: igGetWindowHeight() * 0.5f - radius)
+  igSetCursorPos(pos)
+  when not defined(windows):
+    loadingIndicatorCircle("foo", radius, bright_color, dark_color, 9, 1.5) 
 
 proc init*(ctx: ptr t_antara_ui) =
     setKomodoStyle(ctx)
@@ -32,7 +40,7 @@ proc update*(ctx: ptr t_antara_ui) =
         ImGuiWindowFlags.MenuBar.int32).ImGuiWindowFlags)
     if not is_open:
       antara_close_window(ctx)
-    if mm2_is_running == false:
+    if mm2IsRunning.load() == false:
       waitingView()
     else:
       mainView()
