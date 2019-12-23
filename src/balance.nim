@@ -6,6 +6,7 @@ import cpp_bindings/boost/multiprecision
 
 proc processBalance*(ticker: string) : bool =
     {.gcsafe.}:
+        echo "taskRefreshBalance"
         var req = create(BalanceRequestParams, ticker)
         var answer = rpcBalance(req)
         if answer.error.isSome:

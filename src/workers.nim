@@ -10,17 +10,19 @@ import ./coin_cfg
 import ./mm2_api
 import ./workers_channels
 import ./balance
+import ./tx_history
 
 var thr: array[2, Thread[void]]
 
 proc taskResfreshInfos() {.async.} =
     {.gcsafe.}:    
         var coins = getEnabledCoins()
-        echo "taskRefreshBalance"
+        echo "taskRefreshInfos"
         if coins.len == 0:
             return
         for i, coin in coins:
-            discard processBalance(coin["coin"].getStr)
+            discard spawn processBalance(coin["coin"].getStr)
+            discard spawn processTxHistory(coin["coin"].getStr)
 
 proc allTasks30s() {.async.} =
     await sleepAsync(1)

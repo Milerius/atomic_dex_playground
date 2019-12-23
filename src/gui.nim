@@ -21,6 +21,7 @@ import ./utils
 var
     is_open = true
     balanceRegistry: Table[string, BalanceAnswerSuccess]
+    txHistoryRegistry: Table[string, TransactionHistoryAnswerSuccess]
     curAssetTicker = "" 
     icons: OrderedTable[string, t_antara_image]
     enableableCoinsSelectList: seq[bool]
@@ -102,7 +103,11 @@ proc portfolioCoinsListView() =
   igEndChild()
 
 proc portfolioTransactionView() =
-  return
+  if txHistoryRegistry.contains(curAssetTicker):
+    let transactions = txHistoryRegistry.getOrDefault(curAssetTicker)
+    #echo transactions.JsonNode
+    #for i, currentTransaction in transactions["result"]["transactions"]:
+    #  echo i
 
 proc portfolioCoinDetails() =
   igBeginChild("item view", ImVec2(x: 0, y: 0), true)
@@ -143,9 +148,15 @@ proc waitingView() =
     loadingIndicatorCircle("foo", radius, bright_color, dark_color, 9, 1.5) 
 
 proc retrieveChannelsData() =
-  let res = balanceChannel.tryRecv()
-  if res.dataAvailable:
-    balanceRegistry[res.msg["coin"].getStr] = res.msg
+  let balance_res = balanceChannel.tryRecv()
+  if balance_res.dataAvailable:
+    var r = balance_res.msg.JsonNode
+    balanceRegistry[r["coin"].getStr] = balance_res.msg
+  let tx_res = myTxHistoryChannel.tryRecv()
+  if tx_res.dataAvailable:
+    var r = tx_res.msg.JsonNode
+    txHistoryRegistry[r["coin"].getStr] = tx_res.msg
+  
 
 proc update*(ctx: ptr t_antara_ui) =
     retrieveChannelsData()
