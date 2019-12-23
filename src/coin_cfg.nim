@@ -74,11 +74,10 @@ proc getActiveCoins*() : seq[CoinConfigParams] =
 
 proc getEnabledCoins*() : seq[CoinConfigParams] =
   lock.acquire()
-  let copy = coinsRegistry
-  lock.release()
-  for key, value in copy:
+  for key, value in coinsRegistry:
       if value["currently_enabled"].getBool:
           result.add(value)
+  lock.release()
   result.sort(proc (a, b: CoinConfigParams): int = cmp(a["coin"].getStr, b["coin"].getStr))
 
 proc getEnableableCoins*() : seq[CoinConfigParams] =
@@ -98,3 +97,9 @@ proc updateCoinInfo*(ticker: string, current: CoinConfigParams, desired: CoinCon
 proc insertCoinInfo*(ticker: string, info: CoinConfigParams) =
   withLock(lock):
       coinsRegistry[ticker] = info
+
+proc updateCoinInfoStatus*(coins: seq[CoinConfigParams]) =
+  var node = parseFile(getAssetsPath() & "/config/coins.json")
+  for i, coin in coins:
+    node[coin["coin"].getStr()]["active"] = newJBool(true)
+  writeFile(getAssetsPath() & "/config/coins.json", $node)

@@ -1,5 +1,6 @@
 import json
 import options
+import threadpool
 import ./mm2_api
 import ./coin_cfg
 
@@ -18,7 +19,8 @@ proc enableCoin*(ticker: string) : bool =
             result = false
         else:
             coinInfo.JsonNode["currently_enabled"] = newJBool(true)
-            coinInfo.JsonNode["active"] = newJBool(true)
+            if not coinInfo.JsonNode["active"].getBool:
+                coinInfo.JsonNode["active"] = newJBool(true)
             insertCoinInfo(ticker, coinInfo)
             result = true
             echo "coin: ", ticker, " successfully enabled."
@@ -26,4 +28,9 @@ proc enableCoin*(ticker: string) : bool =
 proc enableDefaultCoins*() =
     var coins = getActiveCoins()
     for i, v in coins:
-        discard enableCoin(v["coin"].getStr)
+        discard spawn enableCoin(v["coin"].getStr)
+
+proc enableMultipleCoins*(coins: seq[CoinConfigParams]) =
+    for i, v in coins:
+        discard spawn enableCoin(v["coin"].getStr)
+    updateCoinInfoStatus(coins)

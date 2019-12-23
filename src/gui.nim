@@ -23,6 +23,7 @@ var
     curAssetTicker = "" 
     icons: OrderedTable[string, t_antara_image]
     enableableCoinsSelectList: seq[bool]
+    enableableCoinsSelectListV: seq[CoinConfigParams]
 
 proc mainMenuBar() =
   if igBeginMenuBar():
@@ -50,19 +51,19 @@ proc portfolioEnableCoinView() =
     for i, coin in coins:
       if igSelectable(coin["name"].getStr & " (" & coin["coin"].getStr & ")", enableableCoinsSelectList[i], ImGuiSelectableFlags.DontClosePopups):
         enableableCoinsSelectList[i] = enableableCoinsSelectList[i] == false
+        enableableCoinsSelectListV.add(coin)
     if coins.len == 0 and igButton("Close"):
         close = true
     else:
       if igButton("Enable", ImVec2(x: 120.0, y: 0.0)):
-        for i, v in enableableCoinsSelectList:
-            if v == true:
-              discard spawn enableCoin(coins[i]["coin"].getStr)
+        enableMultipleCoins(enableableCoinsSelectListV)
         close = true
       igSameLine()
       if igButton("Cancel", ImVec2(x: 120.0, y: 0.0)):
         close = true
     if not popupIsOpen or close:
       enableableCoinsSelectList.applyIt(false)
+      enableableCoinsSelectListV.setLen(0)
       igCloseCurrentPopup()
     igEndPopup()
 
