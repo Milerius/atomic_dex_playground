@@ -3,6 +3,7 @@ import options
 import threadpool
 import ./mm2_api
 import ./coin_cfg
+import ./balance
 
 proc enableCoin*(ticker: string) : bool =
     {.gcsafe.}:
@@ -24,6 +25,7 @@ proc enableCoin*(ticker: string) : bool =
             insertCoinInfo(ticker, coinInfo)
             result = true
             echo "coin: ", ticker, " successfully enabled."
+            discard spawn processBalance(ticker)
 
 proc enableDefaultCoins*() =
     var coins = getActiveCoins()

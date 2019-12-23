@@ -8,6 +8,7 @@ import json
 import std/atomics
 import tables
 
+import ./balance
 import ./mm2_api
 import ./mm2_process
 import ./mm2_core
@@ -104,7 +105,8 @@ proc portfolioCoinDetails() =
   igBeginChild("item view", ImVec2(x: 0, y: 0), true)
   portfolioGuiCoinNameImg(curAssetTicker)
   igSeparator()
-  igText("\uf24e" & " Balance: " & "0 " & curAssetTicker & " (0 USD)")
+  if balanceRegistry.contains(curAssetTicker):
+    igText("\uf24e" & " Balance: " & balanceRegistry.getOrDefault(curAssetTicker).myBalance() & " " & curAssetTicker & " (0 USD)")
   igSeparator()
   igEndChild()
 

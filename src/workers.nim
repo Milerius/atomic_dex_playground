@@ -9,22 +9,11 @@ import os
 import ./coin_cfg
 import ./mm2_api
 import ./workers_channels
+import ./balance
 
 var thr: array[2, Thread[void]]
 
-proc processBalance(ticker: string) : bool =
-    {.gcsafe.}:
-        var req = create(BalanceRequestParams, ticker)
-        var answer = rpcBalance(req)
-        if answer.error.isSome:
-            echo answer.error.get()["error"].getStr
-            result = false
-        else:
-            discard balanceChannel.trySend(answer.success.get())
-            #discard balanceRegistry.insertOrAssign(ticker, answer.success.get())
-            result = true
-
-proc taskResfreshBalance() {.async.} =
+proc taskResfreshInfos() {.async.} =
     {.gcsafe.}:    
         var coins = getEnabledCoins()
         echo "taskRefreshBalance"
@@ -36,7 +25,7 @@ proc taskResfreshBalance() {.async.} =
 proc allTasks30s() {.async.} =
     await sleepAsync(1)
     var asyncresults = newseq[Future[void]](1)
-    asyncresults[0] = taskResfreshBalance()
+    asyncresults[0] = taskResfreshInfos()
     await all(asyncresults)
 
 proc taskRefreshOrderbook() {.async.} =
