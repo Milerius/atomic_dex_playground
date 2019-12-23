@@ -4,6 +4,7 @@ import options
 import hashes
 import sequtils
 import locks
+import logging
 import tables
 import sharedtables
 
@@ -63,7 +64,7 @@ proc parseCfg*() =
         lock.release()
       else:
         echo jsonNode[key], " is invalid"
-    echo "Coins config correctly launched: ", coinsRegistry.len()
+    log(lvlInfo, "coins config correctly launched: ", coinsRegistry.len())
 
 proc getActiveCoins*() : seq[CoinConfigParams] =
   {.gcsafe.}:

@@ -1,12 +1,16 @@
 import options
 import json
+import logging
+
+import ./log
 import ./mm2_api
 import ./workers_channels
 import cpp_bindings/boost/multiprecision
 
 proc processBalance*(ticker: string) : bool =
     {.gcsafe.}:
-        echo "taskRefreshBalance"
+        initLogHandlers("balance thr")
+        info("balance refreshing for ticker: ", ticker)
         var req = create(BalanceRequestParams, ticker)
         var answer = rpcBalance(req)
         if answer.error.isSome:

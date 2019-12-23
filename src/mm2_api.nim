@@ -2,6 +2,7 @@ import httpclient
 import json
 import options
 import sequtils
+import logging
 import tables
 
 import jsonschema
@@ -14,8 +15,7 @@ let lgEndpoint = "http://127.0.0.1:7783"
 proc processPost(data: JsonNode) : string =
     var client = newHttpClient()
     result = client.postContent(lgEndpoint, body = $data)
-    when defined(debug):
-        echo "resp: ", result
+    debug("resp ", result)
 
 jsonSchema:
     ElectrumRequestParams:

@@ -15,9 +15,8 @@ import ./tx_history
 var thr: array[2, Thread[void]]
 
 proc taskResfreshInfos() {.async.} =
-    {.gcsafe.}:    
+    {.gcsafe.}:
         var coins = getEnabledCoins()
-        echo "taskRefreshInfos"
         if coins.len == 0:
             return
         for i, coin in coins:
@@ -33,11 +32,8 @@ proc allTasks30s() {.async.} =
 proc taskRefreshOrderbook() {.async.} =
     {.gcsafe.}: 
         var coins = getEnabledCoins()
-        echo "taskRefreshOrderbook"
         if coins.len == 0:
             return
-        for i, coin in coins:
-            echo i, ":", coin["coin"].getStr
 
 proc allTasks5s() {.async.} =
     await sleepAsync(1)
@@ -50,7 +46,6 @@ proc task30SecondsAsync() {.async.} =
     await sleepAsync(30000)
 
 proc task30Seconds() {.thread.} =
-    #discard allTasks30s()
     while true:
         waitFor task30SecondsAsync()
 
@@ -63,6 +58,6 @@ proc task5Seconds() {.thread.} =
         waitFor task5SecondsAsync()
 
 proc launchWorkers*() =
-    createThread(thr[0], task30Seconds)
-    createThread(thr[1], task5Seconds)
+    createThread(thr[0], task5Seconds)
+    createThread(thr[1], task30Seconds)
     joinThreads(thr)

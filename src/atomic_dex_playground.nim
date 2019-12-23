@@ -1,8 +1,11 @@
+import logging
+
 ##! Dependencies Import
 import ui_workflow_nim
 
 ##! Project Import
 import ./gui
+import ./log
 import ./coin_cfg
 import ./mm2_process
 import ./workers_channels
@@ -14,6 +17,8 @@ proc guiMainLoop(ctx: ptr t_antara_ui) =
     antara_update(ctx)
 
 proc main() =
+  initLogHandlers()
+  log(lvlInfo, "atomic dextop started")
   initChannels()
   coin_cfg.parseCfg()
   mm2_process.initProcess()

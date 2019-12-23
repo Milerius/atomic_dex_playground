@@ -2,8 +2,10 @@ import os
 import osproc
 import threadpool
 import marshal
+import logging
 import std/atomics
 
+import ./log
 import ./mm2_config
 import ./mm2_core
 import ./workers
@@ -23,16 +25,24 @@ proc setPassphrase*(passphrase: string) =
 proc mm2InitThread() {.thread.} =
     mm2IsRunning.store(false)
     {.gcsafe.}:
+        initLogHandlers("mm2 init thr")
+        info("launching mm2 process")
+        echo "----------------------------------------------------------------------"
         var toolsPath = (getAssetsPath() & "/tools/mm2").normalizedPath
         try: 
             mm2Instance = startProcess(command=toolsPath & "/mm2", args=[$$mm2_cfg], env = nil, options={poParentStreams}, workingDir=toolsPath)
         except OSError as e:
-            echo "Got exception OSError with message ", e.msg
-        finally:
-            echo "Fine."
+            fatal("Got exception OSError with message ", e.msg)
+            fatal("Quitting application", e.msg)
+            quit(1)
     sleep(1000)
+    echo "--------------------------------------------------------------------------"
+    info("mm2 process correctly launched")
     mm2IsRunning.store(true)
+    info("mm2 ready for GUI interaction")
+    info("enabling default coins")
     enableDefaultCoins()
+    info("launching workers")
     launchWorkers()
     
         

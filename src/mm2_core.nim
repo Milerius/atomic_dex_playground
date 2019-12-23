@@ -1,6 +1,9 @@
 import json
 import options
 import threadpool
+import logging
+
+import ./log
 import ./mm2_api
 import ./coin_cfg
 import ./balance
@@ -8,6 +11,7 @@ import ./tx_history
 
 proc enableCoin*(ticker: string) : bool =
     {.gcsafe.}:
+        initLogHandlers("coin thr")
         var coinInfo = getCoinInfo(ticker)
         if coinInfo["currently_enabled"].getBool:
             return
@@ -25,7 +29,7 @@ proc enableCoin*(ticker: string) : bool =
                 coinInfo.JsonNode["active"] = newJBool(true)
             insertCoinInfo(ticker, coinInfo)
             result = true
-            echo "coin: ", ticker, " successfully enabled."
+            info("coin: ", ticker, " successfully enabled.")
             discard spawn processBalance(ticker)
             discard spawn processTxHistory(ticker)
 
