@@ -15,9 +15,11 @@ requires "nim >= 1.0.4"
 requires "ui_workflow_nim >= 0.7.0"
 requires "jsonschema"
 
+when defined(macosx):
+    binDir = "bin/atomic_dex_desktop.app/Contents/MacOS"
+
 before build:
     when defined(macosx):
-        binDir = "bin/atomic_dex_desktop.app/Contents/MacOS"
         exec("cp -u data/osx/Info.plist bin/atomic_dex_desktop.app/Contents/ ;" &
         "cp -u -R assets bin/atomic_dex_desktop.app/Contents/Resources/ ;" &
         "chmod +x bin/atomic_dex_desktop.app/Contents/Resources/assets/tools/mm2/mm2")
