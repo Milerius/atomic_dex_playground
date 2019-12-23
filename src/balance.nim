@@ -9,8 +9,7 @@ import cpp_bindings/boost/multiprecision
 
 proc processBalance*(ticker: string) : bool =
     {.gcsafe.}:
-        initLogHandlers("balance thr")
-        info("balance refreshing for ticker: ", ticker)
+        initLogHandlers("worker thr")
         var req = create(BalanceRequestParams, ticker)
         var answer = rpcBalance(req)
         if answer.error.isSome:
