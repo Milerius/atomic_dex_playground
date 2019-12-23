@@ -21,16 +21,17 @@ proc processBalance(ticker: string) : bool =
             result = false
         else:
             discard balanceChannel.trySend(answer.success.get())
+            #discard balanceRegistry.insertOrAssign(ticker, answer.success.get())
             result = true
 
 proc taskResfreshBalance() {.async.} =
-    var coins = getEnabledCoins()
-    echo "taskRefreshBalance"
-    if coins.len == 0:
-        return
-    for i, coin in coins:
-        discard spawn processBalance(coin["coin"].getStr)
-    sync()
+    {.gcsafe.}:    
+        var coins = getEnabledCoins()
+        echo "taskRefreshBalance"
+        if coins.len == 0:
+            return
+        for i, coin in coins:
+            discard processBalance(coin["coin"].getStr)
 
 proc allTasks30s() {.async.} =
     await sleepAsync(1)
@@ -39,12 +40,13 @@ proc allTasks30s() {.async.} =
     await all(asyncresults)
 
 proc taskRefreshOrderbook() {.async.} =
-    var coins = getEnabledCoins()
-    echo "taskRefreshOrderbook"
-    if coins.len == 0:
-        return
-    for i, coin in coins:
-        echo i, ":", coin["coin"].getStr
+    {.gcsafe.}: 
+        var coins = getEnabledCoins()
+        echo "taskRefreshOrderbook"
+        if coins.len == 0:
+            return
+        for i, coin in coins:
+            echo i, ":", coin["coin"].getStr
 
 proc allTasks5s() {.async.} =
     await sleepAsync(1)

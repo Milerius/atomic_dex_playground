@@ -47,7 +47,8 @@ export `[]=`
 export create
 export unsafeAccess
 
-var coinsRegistry: ConcurrentReg[int, CoinConfigParams]
+var coinsRegistry: Table[string, CoinConfigParams]
+var lock: Lock
 
 ##! Public functions
 proc parseCfg*() =
@@ -56,33 +57,44 @@ proc parseCfg*() =
     for key in jsonNode.keys:
       if jsonNode[key].isValid(CoinConfigParams):
         var res = CoinConfigParams(jsonNode[key])
-        discard coinsRegistry.insertOrAssign(key.hash, res)
+        lock.acquire()
+        coinsRegistry[key] = res
+        lock.release()
       else:
         echo jsonNode[key], " is invalid"
-    echo "Coins config correctly launched: ", coinsRegistry.size
+    echo "Coins config correctly launched: ", coinsRegistry.len()
 
 proc getActiveCoins*() : seq[CoinConfigParams] =
+  {.gcsafe.}:
+    lock.acquire()
     for i, value in coinsRegistry:
         if value["active"].getBool:
             result.add(value)
-    result
+    lock.release()
 
 proc getEnabledCoins*() : seq[CoinConfigParams] =
-    for key, value in coinsRegistry:
-        if value["currently_enabled"].getBool:
-            result.add(value)
-    result.sort(proc (a, b: CoinConfigParams): int = cmp(a["coin"].getStr, b["coin"].getStr))
+  lock.acquire()
+  let copy = coinsRegistry
+  lock.release()
+  for key, value in copy:
+      if value["currently_enabled"].getBool:
+          result.add(value)
+  result.sort(proc (a, b: CoinConfigParams): int = cmp(a["coin"].getStr, b["coin"].getStr))
 
 proc getEnableableCoins*() : seq[CoinConfigParams] =
+  withLock(lock):
     for key, value in coinsRegistry:
         if not value["currently_enabled"].getBool:
             result.add(value)
 
 proc getCoinInfo*(ticker: string): CoinConfigParams =   
-    result = coinsRegistry.at(ticker.hash)
+  withLock(lock):
+      result = coinsRegistry.getOrDefault(ticker)
 
 proc updateCoinInfo*(ticker: string, current: CoinConfigParams, desired: CoinConfigParams) =
-  coinsRegistry.assignIfEqual(ticker.hash, current, desired)
+  withLock(lock):
+    coinsRegistry[ticker] = desired
 
 proc insertCoinInfo*(ticker: string, info: CoinConfigParams) =
-    discard coinsRegistry.insertOrAssign(ticker.hash, info)
+  withLock(lock):
+      coinsRegistry[ticker] = info
