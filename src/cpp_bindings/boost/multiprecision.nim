@@ -15,12 +15,20 @@ when defined(linux):
 
 
 ##! C++ Bindings
+type StdStringStream* {.importcpp: "std::stringstream", header: "<sstream>", byref.} = object
+
+proc setPrecision*(lhs: StdStringStream, rhs: cint) {.importcpp: "#.precision(#)", header: "<iomanip>"}
+proc str*(lhs: StdStringStream): cstring {.importcpp: "#.str().data()".}
+
 const boostHeader = "<boost/multiprecision/cpp_dec_float.hpp>"
 
 type
-    TFloat50* {.importcpp"boost::multiprecision::cpp_dec_float_50", header: boostHeader, byref.} = object
+    TFloat50* {.importcpp: "boost::multiprecision::cpp_dec_float_50", header: boostHeader, byref.} = object
 
 proc constructTFloat50*(nb: cstring): TFloat50 {.importcpp: "boost::multiprecision::cpp_dec_float_50(@)", constructor.}
 proc convertToStr*(instance: TFloat50): cstring {.importcpp: "#.convert_to<std::string>().data()"}
 
 proc `-`*(lhs: TFloat50, rhs: TFloat50): TFloat50 {.importcpp: "# - #".}
+proc `*`*(lhs: TFloat50, rhs: TFloat50): TFloat50 {.importcpp: "# * #".}
+proc `<<`*(lhs: StdStringStream, rhs: TFloat50) {.importcpp: "# << #".}
+proc `+`*(lhs: TFloat50, rhs: TFloat50): TFloat50 {.importcpp: "# + #"}

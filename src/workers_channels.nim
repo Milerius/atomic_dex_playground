@@ -6,6 +6,7 @@ import ./mm2_api
 type CoinpaprikaPrice* = tuple
     ticker: string
     price: string
+    fiat: string
 
 var paprikaChannel*: Channel[array[2, CoinpaprikaPrice]]
 var balanceChannel*: Channel[BalanceAnswerSuccess]

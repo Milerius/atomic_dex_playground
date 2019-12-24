@@ -10,6 +10,7 @@ import std/atomics
 import tables
 
 import ./balance
+import ./coinpaprika_provider
 import ./mm2_api
 import ./mm2_process
 import ./mm2_core
@@ -19,17 +20,22 @@ import ./gui_style
 import ./gui_widgets
 import ./utils
 
+let
+  value_color = ImVec4(x: 128.0 / 255.0, y: 128.0 / 255.0, z: 128.0 / 255.0, w: 1.0) 
+  loss_color = ImVec4(x: 1, y: 52.0 / 255.0, z: 0, w: 1.0)
+  gain_color = ImVec4(x: 80.0 / 255.0, y: 1, z: 118.0 / 255.0, w: 1.0)
+
 var
     is_open = true
     balanceRegistry: Table[string, BalanceAnswerSuccess]
     txHistoryRegistry: Table[string, TransactionHistoryAnswerSuccess]
-    curAssetTicker = "" 
+    providerRegistry: Table[string, string]
+    allProviderRegistry: Table[string, providerRegistry] = {"EUR": initTable[string, string](), "USD": initTable[string, string]()}.toTable()
+    curAssetTicker = ""
+    curFiat = "USD"
     icons: OrderedTable[string, t_antara_image]
     enableableCoinsSelectList: seq[bool]
-    enableableCoinsSelectListV: seq[CoinConfigParams]
-    value_color = ImVec4(x: 128.0 / 255.0, y: 128.0 / 255.0, z: 128.0 / 255.0, w: 1.0) 
-    loss_color = ImVec4(x: 1, y: 52.0 / 255.0, z: 0, w: 1.0)
-    gain_color = ImVec4(x: 80.0 / 255.0, y: 1, z: 118.0 / 255.0, w: 1.0)
+    enableableCoinsSelectListV: seq[CoinConfigParams]   
 
 proc mainMenuBar() =
   if igBeginMenuBar():
@@ -144,7 +150,7 @@ proc portfolioCoinDetails() =
   igEndChild()
 
 proc portfolioView() =
-  igText("Total Balance: 0 USD")
+  igText("Total Balance:" & " " & getWholeBalanceFiat(allProviderRegistry[curFiat], balanceRegistry) & " " & curFiat)
   portfolioEnableCoinView()
   portfolioCoinsListView()
   igSameLine()
@@ -176,7 +182,11 @@ proc retrieveChannelsData() =
   if tx_res.dataAvailable:
     var r = tx_res.msg.JsonNode
     txHistoryRegistry[r["coin"].getStr] = tx_res.msg
-  
+  let provider_res = paprikaChannel.tryRecv()
+  if provider_res.dataAvailable:
+    let tunnel = provider_res.msg
+    for i, cur in tunnel:
+      allProviderRegistry[cur.fiat][cur.ticker] = cur.price
 
 proc update*(ctx: ptr t_antara_ui) =
     retrieveChannelsData()
