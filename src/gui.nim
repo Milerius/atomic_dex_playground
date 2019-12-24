@@ -4,6 +4,8 @@ import strutils
 import sequtils
 import ui_workflow_nim
 import threadpool
+import options
+import browsers
 import times
 import json
 import std/atomics
@@ -36,6 +38,7 @@ var
     curFiat = "USD"
     icons: OrderedTable[string, t_antara_image]
     enableableCoinsSelectList: seq[bool]
+    curWindowSize: ImVec2
     enableableCoinsSelectListV: seq[CoinConfigParams]   
 
 proc mainMenuBar() =
@@ -118,6 +121,58 @@ proc portfolioCoinsListView() =
   igEndChild()
 
 proc portfolioTransactionDetailsModal(open_modal: bool, tx: TransactionData) =
+  igPushID(tx["tx_hash"].getStr())
+  if open_modal:
+    igOpenPopup("Transaction Details")
+  var is_open = true  
+  #igSetNextWindowSizeConstraints(ImVec2(x: 0, y: 0), ImVec2(x: 0, y: curWindowSize.y - 50))
+  if igBeginPopupModal("Transaction Details", addr is_open, (ImGuiWindowFlags.AlwaysAutoResize.int32 or ImGuiWindowFlags.NoMove.int32).ImGuiWindowFlags):
+    let
+      my_balance_change = tx["my_balance_change"].getStr()
+      am_i_sender = my_balance_change[0] == '-'
+      prefix = am_i_sender ? "" ! "+"
+      timestamp = tx["timestamp"].getInt
+      human_timestamp = timestamp == 0 ? "" ! $timestamp.fromUnix().format("yyyy-MM-dd hh:mm:ss")
+      curFiatRegistry = curFiat == "USD" ? allProviderRegistry["USD"] ! allProviderRegistry["EUR"]
+    igSeparator()
+    igText(am_i_sender ? "Sent" ! "Received")
+    igTextColored(am_i_sender ? loss_color ! gain_color, prefix & my_balance_change & " " & curAssetTicker)
+    igSameLine(300)
+    igTextColored(value_color, getPriceInFiatFromTx(curFiatRegistry, curCoin, TransactionData(tx)) & " " & curFiat)
+    if timestamp != 0:
+      igSeparator()
+      igText("Date")
+      igTextColored(value_color, human_timestamp)
+    igSeparator()
+    igText("To")
+    for _, address in tx["to"].getElems:
+      igTextColored(value_color, address.getStr)
+    igSeparator()
+    igText("Fees")
+    let fee = FeesDetails(tx["fee_details"])
+    var fees = ""
+    if fee["amount"].isSome():
+      fees = fee["amount"].get().getStr()
+    elif fee["total_fee"].isSome():
+      fees = fee["total_fee"].get().getStr()
+    igTextColored(value_color, fees)
+    igSeparator()
+    igText("Transaction hash")
+    igTextColored(value_color, tx["tx_hash"].getStr())
+    igSeparator()
+    igText("Block Height")
+    igTextColored(value_color, $tx["block_height"].getInt())
+    igSeparator()
+    igText("Confirmations")
+    igTextColored(value_color, $tx["confirmations"].getInt())
+    igSeparator()
+    if igButton("Close"):
+      igCloseCurrentPopup()
+    igSameLine()
+    if igButton("View in Explorer"):
+      openDefaultBrowser(curCoin["explorer_url"].getElems()[0].getStr() & "tx/" & tx["tx_hash"].getStr())
+    igEndPopup()
+  igPopID()
   return
 
 proc portfolioTransactionView() =
@@ -217,6 +272,7 @@ proc update*(ctx: ptr t_antara_ui) =
     igSetNextWindowSize(ImVec2(x: 1280, y: 720), ImGuiCond.FirstUseEver)
     igBegin("atomicDex", addr is_open, (ImGuiWindowFlags.NoCollapse.int32 or
         ImGuiWindowFlags.MenuBar.int32).ImGuiWindowFlags)
+    curWindowSize = igGetWindowSize()
     if not is_open:
       antara_close_window(ctx)
     if mm2IsRunning.load() == false:

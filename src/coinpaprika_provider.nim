@@ -64,7 +64,7 @@ proc getPriceInFiat*(price: string, balanceRegistry: Table[string, BalanceAnswer
     result = convertIt(total)
 
 proc getPriceInFiatFromTx*(priceRegistry: Table[string, string], coin: CoinConfigParams, tx: TransactionData) : string =
-    if coin["coinpaprika_id"].getStr() == "test-coin":
+    if coin["coinpaprika_id"].getStr() == "test-coin" or not priceRegistry.contains(coin["coin"].getStr()):
         result = "0.00"
         return
     let 

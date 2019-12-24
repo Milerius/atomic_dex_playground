@@ -16,8 +16,7 @@ proc processPost(data: JsonNode) : string =
     debug("req ", $data)
     var client = newHttpClient()
     result = client.postContent(lgEndpoint, body = $data)
-    if result.len < 250:
-        debug("resp", result)
+    debug("resp", result)
 
 jsonSchema:
     ElectrumRequestParams:
@@ -92,12 +91,14 @@ export ElectrumAnswerSuccess
 export ElectrumAnswerError
 export BalanceRequestParams
 export BalanceAnswerSuccess
+export FeesDetails
 export TransactionData
 export TransactionHistoryContents
 export TransactionHistoryRequestParams
 export TransactionHistoryAnswerSuccess
 export `[]`
 export `unsafeAccess`
+export `unsafeOptAccess`
 export `create`
 export `isValid`
 
