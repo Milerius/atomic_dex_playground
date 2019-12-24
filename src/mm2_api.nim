@@ -13,15 +13,17 @@ import ./coin_cfg
 let lgEndpoint = "http://127.0.0.1:7783"
 
 proc processPost(data: JsonNode) : string =
+    debug("req ", $data)
     var client = newHttpClient()
     result = client.postContent(lgEndpoint, body = $data)
-    debug("resp ", result)
+    if result.len < 250:
+        debug("resp ", result)
 
 jsonSchema:
     ElectrumRequestParams:
         coin: string
         servers: ElectrumServerParams[]
-        with_tx_history : bool
+        tx_history : bool
     ElectrumAnswerSuccess:
         address: string
         balance: string
@@ -42,7 +44,7 @@ jsonSchema:
         limit: int
         from_id ?: string
     StatusAdditionalInfo:
-        transaction_left ?: int
+        transactions_left ?: int
         code ?: int
         message ?: string
         blocks_left ?: int
