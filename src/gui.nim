@@ -32,6 +32,7 @@ var
     providerRegistry: Table[string, string]
     allProviderRegistry: Table[string, providerRegistry] = {"EUR": initTable[string, string](), "USD": initTable[string, string]()}.toTable()
     curAssetTicker = ""
+    curCoin : CoinConfigParams
     curFiat = "USD"
     icons: OrderedTable[string, t_antara_image]
     enableableCoinsSelectList: seq[bool]
@@ -108,8 +109,10 @@ proc portfolioCoinsListView() =
   for i, v in(coins):
     if curAssetTicker.len == 0:
       curAssetTicker = v["coin"].getStr
+      curCoin = v
     if igSelectable("##" & v["coin"].getStr, v["coin"].getStr == curAssetTicker):
       curAssetTicker = v["coin"].getStr
+      curCoin = v
     igSameLine()
     portfolioGuiCoinNameImg(v["coin"].getStr)
   igEndChild()
@@ -140,7 +143,13 @@ proc portfolioCoinDetails() =
   portfolioGuiCoinNameImg(curAssetTicker)
   igSeparator()
   if balanceRegistry.contains(curAssetTicker):
-    igText("\uf24e" & " Balance: " & balanceRegistry.getOrDefault(curAssetTicker).myBalance() & " " & curAssetTicker & " (0 USD)")
+    if allProviderRegistry[curFiat].contains(curAssetTicker):
+      igText("\uf24e" & " Balance: " & balanceRegistry.getOrDefault(curAssetTicker).myBalance() & " " & curAssetTicker & 
+          " (" & getPriceInFiat(allProviderRegistry[curFiat][curAssetTicker], balanceRegistry, curAssetTicker) & 
+          " " & curFiat & ")")
+    else:
+      igText("\uf24e" & " Balance: " & balanceRegistry.getOrDefault(curAssetTicker).myBalance() & " " & curAssetTicker &
+          " (" & "0.00 " & curFiat & ")")
   igSeparator()
   if igBeginTabBar("##Tabs", ImGuiTabBarFlags.None):
     if igBeginTabItem("Transactions"):

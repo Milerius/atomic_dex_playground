@@ -66,7 +66,7 @@ proc convertIt(value: TFloat50, precision: int = 2) : string =
     ss << value
     result = $ss.str()
 
-proc getPriceInFiat(price: string, balanceRegistry: Table[string, BalanceAnswerSuccess], ticker: string): string = 
+proc getPriceInFiat*(price: string, balanceRegistry: Table[string, BalanceAnswerSuccess], ticker: string): string = 
     var total = getPriceInFiatF(price, balanceRegistry, ticker)
     result = convertIt(total) 
  
