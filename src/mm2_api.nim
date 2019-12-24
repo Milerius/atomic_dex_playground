@@ -16,7 +16,7 @@ proc processPost(data: JsonNode) : string =
     when defined(windows):
         echo("req ", $data)
     else:
-        info("req", result)
+        info("req ", $data)
     var client = newHttpClient()
     result = client.postContent(lgEndpoint, body = $data)
     if result.len < 250:
@@ -98,11 +98,13 @@ export ElectrumAnswerSuccess
 export ElectrumAnswerError
 export BalanceRequestParams
 export BalanceAnswerSuccess
+export TransactionHistoryContents
 export TransactionHistoryRequestParams
 export TransactionHistoryAnswerSuccess
 export `[]`
 export `unsafeAccess`
 export `create`
+export `isValid`
 
 ##! Type Declaration
 type ElectrumAnswer = object

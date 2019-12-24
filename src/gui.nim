@@ -4,6 +4,7 @@ import strutils
 import sequtils
 import ui_workflow_nim
 import threadpool
+import times
 import json
 import std/atomics
 import tables
@@ -26,6 +27,9 @@ var
     icons: OrderedTable[string, t_antara_image]
     enableableCoinsSelectList: seq[bool]
     enableableCoinsSelectListV: seq[CoinConfigParams]
+    value_color = ImVec4(x: 128.0 / 255.0, y: 128.0 / 255.0, z: 128.0 / 255.0, w: 1.0) 
+    loss_color = ImVec4(x: 1, y: 52.0 / 255.0, z: 0, w: 1.0)
+    gain_color = ImVec4(x: 80.0 / 255.0, y: 1, z: 118.0 / 255.0, w: 1.0)
 
 proc mainMenuBar() =
   if igBeginMenuBar():
@@ -106,10 +110,24 @@ proc portfolioCoinsListView() =
 
 proc portfolioTransactionView() =
   if txHistoryRegistry.contains(curAssetTicker):
-    let transactions = txHistoryRegistry.getOrDefault(curAssetTicker)
-    #echo transactions.JsonNode
-    #for i, currentTransaction in transactions["result"]["transactions"]:
-    #  echo i
+    let transactions = txHistoryRegistry[curAssetTicker]
+    for i, curTx in  transactions["result"]["transactions"].getElems:
+      let 
+        timestamp = curTx["timestamp"].getInt
+        human_timestamp = timestamp == 0 ? "" ! $timestamp.fromUnix().format("yyyy-MM-dd hh:mm:ss")
+        my_balance_change = curTx["my_balance_change"].getStr()
+        am_i_sender = my_balance_change[0] == '-'
+        prefix = am_i_sender ? "" ! "+"
+        tx_color = am_i_sender ? loss_color ! gain_color
+        address = am_i_sender ? curTx["to"].getElems()[0].getStr() ! curTx["from"].getElems()[0].getStr()
+      var open_modal = false
+      igBeginGroup()
+      igText(human_timestamp)
+      igSameLine(300.0)
+      igTextColored(tx_color, prefix & my_balance_change & " " & curAssetTicker)
+      igTextColored(value_color, address)
+      igSameLine(300.0)
+      igEndGroup()
 
 proc portfolioCoinDetails() =
   igBeginChild("item view", ImVec2(x: 0, y: 0), true)
