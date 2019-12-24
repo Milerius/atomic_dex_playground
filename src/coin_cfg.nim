@@ -52,51 +52,53 @@ var lock: Lock
 lock.initLock()
 ##! Public functions
 proc parseCfg*() =
-    let entireFile = readFile(getAssetsPath() & "/config/coins.json")
-    let jsonNode = parseJson(entireFile)
-    for key in jsonNode.keys:
-      if jsonNode[key].isValid(CoinConfigParams):
-        var res = CoinConfigParams(jsonNode[key])
-        lock.acquire()
-        coinsRegistry[key] = res
-        lock.release()
-      else:
-        echo jsonNode[key], " is invalid"
-    log(lvlInfo, "coins config correctly launched: ", coinsRegistry.len())
+  let entireFile = readFile(getAssetsPath() & "/config/coins.json")
+  let jsonNode = parseJson(entireFile)
+  for key in jsonNode.keys:
+    if jsonNode[key].isValid(CoinConfigParams):
+      var res = CoinConfigParams(jsonNode[key])
+      lock.acquire()
+      coinsRegistry[key] = res
+      lock.release()
+    else:
+      warn(jsonNode[key], " is invalid")
+  info("coins config correctly launched: ", coinsRegistry.len())
 
-proc getActiveCoins*() : seq[CoinConfigParams] =
+proc getActiveCoins*(): seq[CoinConfigParams] =
   {.gcsafe.}:
     lock.acquire()
     for i, value in coinsRegistry:
-        if value["active"].getBool:
-            result.add(value)
+      if value["active"].getBool:
+        result.add(value)
     lock.release()
 
-proc getEnabledCoins*() : seq[CoinConfigParams] =
+proc getEnabledCoins*(): seq[CoinConfigParams] =
   lock.acquire()
   for key, value in coinsRegistry:
-      if value["currently_enabled"].getBool:
-          result.add(value)
+    if value["currently_enabled"].getBool:
+      result.add(value)
   lock.release()
-  result.sort(proc (a, b: CoinConfigParams): int = cmp(a["coin"].getStr, b["coin"].getStr))
+  result.sort(proc (a, b: CoinConfigParams): int = cmp(a["coin"].getStr, b[
+      "coin"].getStr))
 
-proc getEnableableCoins*() : seq[CoinConfigParams] =
+proc getEnableableCoins*(): seq[CoinConfigParams] =
   withLock(lock):
     for key, value in coinsRegistry:
-        if not value["currently_enabled"].getBool:
-            result.add(value)
+      if not value["currently_enabled"].getBool:
+        result.add(value)
 
-proc getCoinInfo*(ticker: string): CoinConfigParams =   
+proc getCoinInfo*(ticker: string): CoinConfigParams =
   withLock(lock):
-      result = coinsRegistry.getOrDefault(ticker)
+    result = coinsRegistry.getOrDefault(ticker)
 
-proc updateCoinInfo*(ticker: string, current: CoinConfigParams, desired: CoinConfigParams) =
+proc updateCoinInfo*(ticker: string, current: CoinConfigParams,
+    desired: CoinConfigParams) =
   withLock(lock):
     coinsRegistry[ticker] = desired
 
 proc insertCoinInfo*(ticker: string, info: CoinConfigParams) =
   withLock(lock):
-      coinsRegistry[ticker] = info
+    coinsRegistry[ticker] = info
 
 proc updateCoinInfoStatus*(coins: seq[CoinConfigParams]) =
   var node = parseFile(getAssetsPath() & "/config/coins.json")

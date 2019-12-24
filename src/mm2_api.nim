@@ -13,17 +13,11 @@ import ./coin_cfg
 let lgEndpoint = "http://127.0.0.1:7783"
 
 proc processPost(data: JsonNode) : string =
-    when defined(windows):
-        echo("req ", $data)
-    else:
-        info("req ", $data)
+    debug("req ", $data)
     var client = newHttpClient()
     result = client.postContent(lgEndpoint, body = $data)
     if result.len < 250:
-        when defined(windows):
-            echo("resp ", result)
-        else:
-            info("resp", result)
+        debug("resp", result)
 
 jsonSchema:
     ElectrumRequestParams:
@@ -98,6 +92,7 @@ export ElectrumAnswerSuccess
 export ElectrumAnswerError
 export BalanceRequestParams
 export BalanceAnswerSuccess
+export TransactionData
 export TransactionHistoryContents
 export TransactionHistoryRequestParams
 export TransactionHistoryAnswerSuccess
@@ -139,7 +134,7 @@ proc rpcElectrum*(req: ElectrumRequestParams) : ElectrumAnswer =
         elif json.isValid(ElectrumAnswerError):
             result.error = some(ElectrumAnswerError(json))
     except HttpRequestError as e:
-        echo "Got exception HttpRequestError: ", e.msg
+        error "Got exception HttpRequestError: ", e.msg
         result.error = some(ElectrumAnswerError(%*{"error": e.msg}))
 
 
@@ -153,7 +148,7 @@ proc rpcBalance*(req: BalanceRequestParams) : BalanceAnswer =
         elif json.isValid(BalanceAnswerError):
             result.error = some(BalanceAnswerError(json))
     except HttpRequestError as e:
-        echo "Got exception HttpRequestError: ", e.msg
+        error "Got exception HttpRequestError: ", e.msg
         result.error = some(BalanceAnswerError(%*{"error": e.msg}))
 
 
@@ -169,5 +164,5 @@ proc rpcMyTxHistory*(req: TransactionHistoryRequestParams): MyTransactionHistory
         elif json.isValid(TransactionHistoryAnswerError):
             result.error = some(TransactionHistoryAnswerError(json))
     except HttpRequestError as e:
-        echo "Got exception HttpRequestError: ", e.msg
+        error("Got exception HttpRequestError: ", e.msg)
         result.error = some(TransactionHistoryAnswerError(%*{"error": e.msg}))

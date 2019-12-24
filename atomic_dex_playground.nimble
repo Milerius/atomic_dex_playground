@@ -12,7 +12,7 @@ backend       = "cpp"
 # Dependencies
 
 requires "nim >= 1.0.4"
-requires "ui_workflow_nim >= 0.7.0"
+requires "ui_workflow_nim >= 0.8.0"
 requires "jsonschema"
 
 when defined(macosx):

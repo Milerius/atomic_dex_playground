@@ -129,6 +129,7 @@ proc portfolioTransactionView() =
         prefix = am_i_sender ? "" ! "+"
         tx_color = am_i_sender ? loss_color ! gain_color
         address = am_i_sender ? curTx["to"].getElems()[0].getStr() ! curTx["from"].getElems()[0].getStr()
+        curFiatRegistry = curFiat == "USD" ? allProviderRegistry["USD"] ! allProviderRegistry["EUR"]
       var open_modal = false
       igBeginGroup()
       igText(human_timestamp)
@@ -136,6 +137,7 @@ proc portfolioTransactionView() =
       igTextColored(tx_color, prefix & my_balance_change & " " & curAssetTicker)
       igTextColored(value_color, address)
       igSameLine(300.0)
+      igTextColored(value_color, getPriceInFiatFromTx(curFiatRegistry, curCoin, TransactionData(curTx)) & " " & curFiat)
       igEndGroup()
 
 proc portfolioCoinDetails() =

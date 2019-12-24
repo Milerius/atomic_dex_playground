@@ -9,16 +9,14 @@ import cpp_bindings/boost/multiprecision
 
 proc processBalance*(ticker: string) : bool =
     {.gcsafe.}:
-        when not defined(windows):
-            initLogHandlers("worker thr")
+        initLogHandlers("worker thr")
         var req = create(BalanceRequestParams, ticker)
         var answer = rpcBalance(req)
         if answer.error.isSome:
-            echo answer.error.get()["error"].getStr
+            error(answer.error.get()["error"].getStr)
             result = false
         else:
             discard balanceChannel.trySend(answer.success.get())
-            #discard balanceRegistry.insertOrAssign(ticker, answer.success.get())
             result = true
 
 proc getBalanceWithLockedFunds(balance: BalanceAnswerSuccess) : TFloat50 =
