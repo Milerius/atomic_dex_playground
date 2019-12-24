@@ -117,28 +117,40 @@ proc portfolioCoinsListView() =
     portfolioGuiCoinNameImg(v["coin"].getStr)
   igEndChild()
 
+proc portfolioTransactionDetailsModal(open_modal: bool, tx: TransactionData) =
+  return
+
 proc portfolioTransactionView() =
   if txHistoryRegistry.contains(curAssetTicker):
     let transactions = txHistoryRegistry[curAssetTicker]
-    for i, curTx in  transactions["result"]["transactions"].getElems:
-      let 
-        timestamp = curTx["timestamp"].getInt
-        human_timestamp = timestamp == 0 ? "" ! $timestamp.fromUnix().format("yyyy-MM-dd hh:mm:ss")
-        my_balance_change = curTx["my_balance_change"].getStr()
-        am_i_sender = my_balance_change[0] == '-'
-        prefix = am_i_sender ? "" ! "+"
-        tx_color = am_i_sender ? loss_color ! gain_color
-        address = am_i_sender ? curTx["to"].getElems()[0].getStr() ! curTx["from"].getElems()[0].getStr()
-        curFiatRegistry = curFiat == "USD" ? allProviderRegistry["USD"] ! allProviderRegistry["EUR"]
-      var open_modal = false
-      igBeginGroup()
-      igText(human_timestamp)
-      igSameLine(300.0)
-      igTextColored(tx_color, prefix & my_balance_change & " " & curAssetTicker)
-      igTextColored(value_color, address)
-      igSameLine(300.0)
-      igTextColored(value_color, getPriceInFiatFromTx(curFiatRegistry, curCoin, TransactionData(curTx)) & " " & curFiat)
-      igEndGroup()
+    let tx_len = transactions["result"]["transactions"].getElems.len
+    if tx_len > 0:
+      for i, curTx in  transactions["result"]["transactions"].getElems:
+        let 
+          timestamp = curTx["timestamp"].getInt
+          human_timestamp = timestamp == 0 ? "" ! $timestamp.fromUnix().format("yyyy-MM-dd hh:mm:ss")
+          my_balance_change = curTx["my_balance_change"].getStr()
+          am_i_sender = my_balance_change[0] == '-'
+          prefix = am_i_sender ? "" ! "+"
+          tx_color = am_i_sender ? loss_color ! gain_color
+          address = am_i_sender ? curTx["to"].getElems()[0].getStr() ! curTx["from"].getElems()[0].getStr()
+          curFiatRegistry = curFiat == "USD" ? allProviderRegistry["USD"] ! allProviderRegistry["EUR"]
+        var open_modal = false
+        igBeginGroup()
+        igText(human_timestamp)
+        igSameLine(300.0)
+        igTextColored(tx_color, prefix & my_balance_change & " " & curAssetTicker)
+        igTextColored(value_color, address)
+        igSameLine(300.0)
+        igTextColored(value_color, getPriceInFiatFromTx(curFiatRegistry, curCoin, TransactionData(curTx)) & " " & curFiat)
+        igEndGroup()
+        if igIsItemClicked():
+          open_modal = true
+        portfolioTransactionDetailsModal(open_modal, TransactionData(curTx))
+        if i != tx_len:
+          igSeparator()
+    else:
+      igText("No transactions")
 
 proc portfolioCoinDetails() =
   igBeginChild("item view", ImVec2(x: 0, y: 0), true)
