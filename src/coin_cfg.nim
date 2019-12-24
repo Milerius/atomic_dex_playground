@@ -11,8 +11,6 @@ import sharedtables
 import jsonschema
 
 import ./utils
-import ./cpp_bindings/folly/hashmap
-import ./cpp_bindings/std/pair
 
 ##! Schema definitions
 jsonSchema:

@@ -6,6 +6,7 @@ import asyncdispatch
 import os
 
 ##! Project Import
+import ./coinpaprika_provider
 import ./coin_cfg
 import ./mm2_api
 import ./workers_channels
@@ -22,6 +23,7 @@ proc taskResfreshInfos() {.async.} =
         for i, coin in coins:
             discard spawn processBalance(coin["coin"].getStr)
             discard spawn processTxHistory(coin["coin"].getStr)
+            discard spawn processPaprikaProvider(coin)
 
 proc allTasks30s() {.async.} =
     await sleepAsync(1)

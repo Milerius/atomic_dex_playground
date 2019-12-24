@@ -6,6 +6,7 @@ import logging
 import ./log
 import ./mm2_api
 import ./coin_cfg
+import ./coinpaprika_provider
 import ./balance
 import ./tx_history
 
@@ -32,6 +33,7 @@ proc enableCoin*(ticker: string) : bool =
             info("coin: ", ticker, " successfully enabled.")
             discard spawn processBalance(ticker)
             discard spawn processTxHistory(ticker)
+            discard spawn processPaprikaProvider(coinInfo)
 
 proc enableDefaultCoins*() =
     var coins = getActiveCoins()
