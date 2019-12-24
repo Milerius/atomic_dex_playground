@@ -68,7 +68,6 @@ jsonSchema:
         received_by_me: string
         spent_by_me: string
         timestamp: int
-        timestamp_human ?: string
         to: string[]
         total_amount: string
         tx_hash: string
