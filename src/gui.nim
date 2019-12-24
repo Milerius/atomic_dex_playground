@@ -70,8 +70,10 @@ proc portfolioEnableCoinView() =
     igEndPopup()
 
 proc portfolioGuiCoinNameImg(ticker: string, name: string = "", name_first = false) =
+  if not icons.hasKey(ticker):
+    return
   let 
-    icon = icons.getOrDefault(ticker)
+    icon = icons[ticker]
     text = name.len > 0 ? name ! ticker
   if name_first:
     igTextWrapped(text)
