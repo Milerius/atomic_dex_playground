@@ -144,11 +144,12 @@ proc portfolioCoinDetails() =
   igSeparator()
   if balanceRegistry.contains(curAssetTicker):
     if allProviderRegistry[curFiat].contains(curAssetTicker):
-      igText("\uf24e" & " Balance: " & balanceRegistry.getOrDefault(curAssetTicker).myBalance() & " " & curAssetTicker & 
-          " (" & getPriceInFiat(allProviderRegistry[curFiat][curAssetTicker], balanceRegistry, curAssetTicker) & 
+      let price = allProviderRegistry[curFiat][curAssetTicker]
+      igText("\uf24e" & " Balance: " & balanceRegistry[curAssetTicker].myBalance() & " " & curAssetTicker & 
+          " (" & getPriceInFiat(price, balanceRegistry, curAssetTicker) & 
           " " & curFiat & ")")
     else:
-      igText("\uf24e" & " Balance: " & balanceRegistry.getOrDefault(curAssetTicker).myBalance() & " " & curAssetTicker &
+      igText("\uf24e" & " Balance: " & balanceRegistry[curAssetTicker].myBalance() & " " & curAssetTicker &
           " (" & "0.00 " & curFiat & ")")
   igSeparator()
   if igBeginTabBar("##Tabs", ImGuiTabBarFlags.None):
