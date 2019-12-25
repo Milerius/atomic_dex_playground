@@ -30,5 +30,7 @@ proc convertToStr*(instance: TFloat50): cstring {.importcpp: "#.convert_to<std::
 
 proc `-`*(lhs: TFloat50, rhs: TFloat50): TFloat50 {.importcpp: "# - #".}
 proc `*`*(lhs: TFloat50, rhs: TFloat50): TFloat50 {.importcpp: "# * #".}
+proc `>`*(lhs: TFloat50, rhs: TFloat50): bool {.importcpp: "# > #".}
+proc `<`*(lhs: TFloat50, rhs: TFloat50): bool {.importcpp: "# < #".}
 proc `<<`*(lhs: StdStringStream, rhs: TFloat50) {.importcpp: "# << #".}
 proc `+`*(lhs: TFloat50, rhs: TFloat50): TFloat50 {.importcpp: "# + #"}

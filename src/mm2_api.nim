@@ -112,6 +112,7 @@ export TransactionData
 export TransactionHistoryContents
 export TransactionHistoryRequestParams
 export TransactionHistoryAnswerSuccess
+export WithdrawRequestParams
 export WithdrawAnswerSuccess
 export WithdrawAnswerError
 export `[]`

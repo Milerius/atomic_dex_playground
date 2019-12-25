@@ -24,10 +24,18 @@ proc getBalanceWithLockedFunds(balance: BalanceAnswerSuccess) : TFloat50 =
     var locked_funds_f: TFloat50 = constructTFloat50(balance["locked_by_swaps"].getStr)
     result = balance_f - locked_funds_f
 
+proc myBalanceF*(balance: BalanceAnswerSuccess) : TFloat50 =
+    result = constructTFloat50(balance["balance"].getStr)
+    
 proc myBalanceWithLockedFunds*(balance: BalanceAnswerSuccess) : string =
     result = $getBalanceWithLockedFunds(balance).convertToStr
 
 proc myBalance*(balance: BalanceAnswerSuccess) : string =
-    discard myBalanceWithLockedFunds(balance)
     result = balance["balance"].getStr
 
+proc doIHaveEnoughFunds*(balance: BalanceAnswerSuccess, amount: string): bool =
+    var tmp = amount
+    var balance = getBalanceWithLockedFunds(balance)
+    if tmp.len == 0:
+        tmp = "0"
+    result = constructTFloat50(tmp) < balance

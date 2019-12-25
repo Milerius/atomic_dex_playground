@@ -11,6 +11,7 @@ import json
 import std/atomics
 import tables
 
+import ./cpp_bindings/boost/multiprecision
 import ./balance
 import ./coinpaprika_provider
 import ./mm2_api
@@ -26,6 +27,7 @@ let
   value_color = ImVec4(x: 128.0 / 255.0, y: 128.0 / 255.0, z: 128.0 / 255.0, w: 1.0)
   loss_color = ImVec4(x: 1, y: 52.0 / 255.0, z: 0, w: 1.0)
   gain_color = ImVec4(x: 80.0 / 255.0, y: 1, z: 118.0 / 255.0, w: 1.0)
+  error_color = ImVec4(x: 255.0 / 255.0, y: 20.0 / 255.0, z: 20.0 / 255.0, w: 1);
 
 type SendCoinVars = object
   address_input*: array[100, cchar]
@@ -252,6 +254,16 @@ proc input_filter_coin_address(data: ptr ImGuiInputTextCallbackData): int32 {.cd
   var valid = str.len() < 40 and isAlphaNumeric(c)
   result = valid ? 0'i32 ! 1'i32
 
+proc input_filter_coin_amount(data: ptr ImGuiInputTextCallbackData): int32 {.cdecl.} =
+  if data.userData == nil:
+    return 1
+  var str: string = $cast[cstring](data.userData)
+  var c = data.eventChar.char
+  var n = str.count('.')
+  if n == 1 and c == '.':
+    return 1
+  result = isDigit(c) or c == '.' ? 0'i32 ! 1'i32
+
 proc portfolioSendView() =
   if curAssetTicker.len == 0:
     return
@@ -259,6 +271,8 @@ proc portfolioSendView() =
   var
     withdraw_answer = send_vars.withdraw_answer
     broadcast_answer = send_vars.broadcast_answer
+    amount: string
+    address: string
   let has_error = withdraw_answer.error.isSome()
   if broadcast_answer.success.isSome() or broadcast_answer.error.isSome():
     if broadcast_answer.error.isSome():
@@ -270,7 +284,27 @@ proc portfolioSendView() =
     igSetNextItemWidth(width)
     igInputText("Address##send_coin_address_input", send_vars.address_input.addr, 
       send_vars.address_input.len().uint, ImGuiInputTextFlags.CallbackCharFilter, input_filter_coin_address, send_vars.address_input.addr)
+    igSetNextItemWidth(width)
+    igInputText("Amount##send_coin_amount_input", send_vars.amount_input.addr, 
+      send_vars.amount_input.len().uint, ImGuiInputTextFlags.CallbackCharFilter, input_filter_coin_amount, send_vars.amount_input.addr)
+    igSameLine()
+    var 
+      balance = balanceRegistry[curAssetTicker].myBalance()
+      balance_f = balanceRegistry[curAssetTicker].myBalanceF()
+    amount = $cast[cstring](send_vars.amount_input.addr)
+    address = $cast[cstring](send_vars.address_input.addr)
+    if igButton("MAX##send_coin_max_amount_button") or not balanceRegistry[curAssetTicker].doIHaveEnoughFunds(amount):
+      for i, v in balance:
+        send_vars.amount_input[i] = balance[i]
+    if igButton("Send##send_coin_button"):
+      var req = create(WithdrawRequestParams, curAssetTicker, address, amount, amount == balance)
+      return
+    if has_error:
+      igTextColored(error_color, "error")
     sendCoinRegistry[curAssetTicker] = send_vars # we save
+  else:
+    return
+    
 
 proc portfolioCoinDetails() =
   igBeginChild("item view", ImVec2(x: 0, y: 0), true)
