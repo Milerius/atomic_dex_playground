@@ -27,19 +27,30 @@ let
   loss_color = ImVec4(x: 1, y: 52.0 / 255.0, z: 0, w: 1.0)
   gain_color = ImVec4(x: 80.0 / 255.0, y: 1, z: 118.0 / 255.0, w: 1.0)
 
+type SendCoinVars = object
+  address_input: seq[char]
+  amount_input: seq[char]
+  withdraw_answer: WithdrawAnswer
+
 var
     is_open = true
     balanceRegistry: Table[string, BalanceAnswerSuccess]
     txHistoryRegistry: Table[string, TransactionHistoryAnswerSuccess]
     providerRegistry: Table[string, string]
+    sendCoinRegistry: Table[string, SendCoinVars]
     allProviderRegistry: Table[string, providerRegistry] = {"EUR": initTable[string, string](), "USD": initTable[string, string]()}.toTable()
     curAssetTicker = ""
+    curAddress: seq[char]
     curCoin : CoinConfigParams
     curFiat = "USD"
     icons: OrderedTable[string, t_antara_image]
     enableableCoinsSelectList: seq[bool]
     curWindowSize: ImVec2
-    enableableCoinsSelectListV: seq[CoinConfigParams]   
+    enableableCoinsSelectListV: seq[CoinConfigParams]
+
+proc clear(coinVars: var SendCoinVars) =
+  coinVars.address_input.setLen(0)
+  coinVars.amount_input.setLen(0)
 
 proc mainMenuBar() =
   if igBeginMenuBar():
@@ -110,8 +121,10 @@ proc portfolioCoinsListView() =
   igBeginChild("left pane", ImVec2(x: 180, y: 0), true)
   let coins = getEnabledCoins()
   for i, v in(coins):
-    if curAssetTicker.len == 0:
+    if curAssetTicker.len == 0 or curAddress.len == 0:
       curAssetTicker = v["coin"].getStr
+      if balanceRegistry.contains(curAssetTicker):
+        curAddress = balanceRegistry[curAssetTicker]["address"].getStr().toSeq()
       curCoin = v
     if igSelectable("##" & v["coin"].getStr, v["coin"].getStr == curAssetTicker):
       curAssetTicker = v["coin"].getStr
@@ -125,7 +138,6 @@ proc portfolioTransactionDetailsModal(open_modal: bool, tx: TransactionData) =
   if open_modal:
     igOpenPopup("Transaction Details")
   var is_open = true  
-  #igSetNextWindowSizeConstraints(ImVec2(x: 0, y: 0), ImVec2(x: 0, y: curWindowSize.y - 50))
   if igBeginPopupModal("Transaction Details", addr is_open, (ImGuiWindowFlags.AlwaysAutoResize.int32 or ImGuiWindowFlags.NoMove.int32).ImGuiWindowFlags):
     let
       my_balance_change = tx["my_balance_change"].getStr()
@@ -164,7 +176,7 @@ proc portfolioTransactionDetailsModal(open_modal: bool, tx: TransactionData) =
     igTextColored(value_color, $tx["block_height"].getInt())
     igSeparator()
     igText("Confirmations")
-    igTextColored(value_color, $tx["confirmations"].getInt())
+    igTextColored(value_color, $tx["confirmations"].get().getInt())
     igSeparator()
     if igButton("Close"):
       igCloseCurrentPopup()
@@ -207,6 +219,14 @@ proc portfolioTransactionView() =
     else:
       igText("No transactions")
 
+proc portfolioReceiveView() =
+  if curAddress.len > 0:
+    igText("Share the address below to receive coins")
+    igPushItemWidth(100.0 * igGetFontSize() * 0.5)
+    igInputText("##receive_address", addr curAddress[0], curAddress.len().uint, (ImGuiInputTextFlags.ReadOnly.int32 or 
+    ImGuiInputTextFlags.AutoSelectAll.int32).ImGuiInputTextFlags)
+    igPopItemWidth()
+
 proc portfolioCoinDetails() =
   igBeginChild("item view", ImVec2(x: 0, y: 0), true)
   portfolioGuiCoinNameImg(curAssetTicker)
@@ -224,6 +244,11 @@ proc portfolioCoinDetails() =
   if igBeginTabBar("##Tabs", ImGuiTabBarFlags.None):
     if igBeginTabItem("Transactions"):
       portfolioTransactionView()
+      igEndTabItem()
+    if igBeginTabItem("Receive"):
+      portfolioReceiveView()
+      igEndTabItem()
+    if igBeginTabItem("Send"):
       igEndTabItem()
     igEndTabBar()
   igEndChild()

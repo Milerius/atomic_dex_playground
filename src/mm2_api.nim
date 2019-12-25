@@ -59,7 +59,7 @@ jsonSchema:
     TransactionData:
         block_height: int
         coin: string
-        confirmations: int
+        confirmations ?: int
         fee_details: FeesDetails
         "from": string[]
         internal_id: string
@@ -85,6 +85,22 @@ jsonSchema:
         "human_timestamp" ?: string
     TransactionHistoryAnswerError:
         error: string
+    WithdrawRequestParams:
+        "coin": string
+        "to": string
+        "amount": string
+        "max": bool
+    WithdrawAnswerSuccess:
+        "result": TransactionData
+    WithdrawAnswerError:
+        error: string
+    BroadcastRequestParams:
+        coin: string
+        tx_hex: string
+    BroadcastAnswerSuccess:
+        tx_hash: string
+    BroadcastAnswerError:
+        error: string
 
 export ElectrumRequestParams
 export ElectrumAnswerSuccess
@@ -96,6 +112,8 @@ export TransactionData
 export TransactionHistoryContents
 export TransactionHistoryRequestParams
 export TransactionHistoryAnswerSuccess
+export WithdrawAnswerSuccess
+export WithdrawAnswerError
 export `[]`
 export `unsafeAccess`
 export `unsafeOptAccess`
@@ -114,6 +132,14 @@ type BalanceAnswer* = object
 type MyTransactionHistoryAnswer* = object
        success*: Option[TransactionHistoryAnswerSuccess]
        error*: Option[TransactionHistoryAnswerError]
+
+type WithdrawAnswer* = object
+       success*: Option[WithdrawAnswerSuccess]
+       error*: Option[WithdrawAnswerError]
+
+type BroadcastAnswer* = object
+        success*: Option[BroadcastAnswerSuccess]
+        error*: Option[BroadcastAnswerError]
 
 ##! Local Functions
 proc onProgressChanged(total, progress, speed: BiggestInt) =
@@ -167,3 +193,19 @@ proc rpcMyTxHistory*(req: TransactionHistoryRequestParams): MyTransactionHistory
     except HttpRequestError as e:
         error("Got exception HttpRequestError: ", e.msg)
         result.error = some(TransactionHistoryAnswerError(%*{"error": e.msg}))
+
+
+proc rpcWithdraw*(req: WithdrawRequestParams): WithdrawAnswer = 
+    let jsonData = req.JsonNode
+    templateRequest(jsonData, "withdraw")
+    try:
+        let 
+            json = processPost(jsonData).parseJson()
+            finalJson = %*{"result": json}
+        if finalJson.isValid(WithdrawAnswerSuccess):
+            result.success = some(WithdrawAnswerSuccess(finalJson))
+        elif json.isValid(WithdrawAnswerError):
+            result.error = some(WithdrawAnswerError(json))
+    except HttpRequestError as e:
+        error("Got exception HttpRequestError: ", e.msg)
+        result.error = some(WithdrawAnswerError(%*{"error": e.msg}))
