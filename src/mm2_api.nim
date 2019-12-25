@@ -93,7 +93,7 @@ jsonSchema:
     WithdrawAnswerSuccess:
         "result": TransactionData
     WithdrawAnswerError:
-        error: string
+        "error": string
     BroadcastRequestParams:
         coin: string
         tx_hex: string
@@ -209,3 +209,16 @@ proc rpcWithdraw*(req: WithdrawRequestParams): WithdrawAnswer =
     except HttpRequestError as e:
         error("Got exception HttpRequestError: ", e.msg)
         result.error = some(WithdrawAnswerError(%*{"error": e.msg}))
+
+proc rpcBroadcast*(req: BroadcastRequestParams) : BroadcastAnswer =
+    let jsonData = req.JsonNode
+    templateRequest(jsonData, "send_raw_transaction")
+    try:
+        let json = processPost(jsonData).parseJson()
+        if json.isValid(BroadcastAnswerSuccess):
+            result.success = some(BroadcastAnswerSuccess(json))
+        elif json.isValid(BroadcastAnswerError):
+            result.error = some(BroadcastAnswerError(json))
+    except HttpRequestError as e:
+        error "Got exception HttpRequestError: ", e.msg
+        result.error = some(BroadcastAnswerError(%*{"error": e.msg}))
